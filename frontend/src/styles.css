@@ -1,0 +1,78 @@
+body {
+  font-family: Arial;
+  background: #f5f6fa;
+  margin: 0;
+}
+
+.container {
+  padding: 20px;
+}
+
+h1, h2 {
+  color: #2c3e50;
+}
+
+/* TABLE */
+table {
+  width: 100%;
+  background: white;
+  border-collapse: collapse;
+}
+
+th {
+  background: #2c3e50;
+  color: white;
+  padding: 10px;
+}
+
+td {
+  padding: 10px;
+  border-bottom: 1px solid #eee;
+}
+
+/* FORM */
+.form-container {
+  background: white;
+  padding: 20px;
+  margin-bottom: 20px;
+  border-radius: 10px;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+
+input {
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+}
+
+/* BOTÕES */
+button {
+  padding: 6px 10px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.btn-green { background: #2ecc71; color: white; }
+.btn-red { background: #e74c3c; color: white; }
+.btn-orange { background: #f39c12; color: white; }
+
+.btn-finalizar {
+  background: #3498db;
+  color: white;
+  width: 100%;
+  padding: 12px;
+}
+
+.btn-disabled {
+  background: #ccc;
+  color: #666;
+  width: 100%;
+  padding: 12px;
+  cursor: not-allowed;
+}
