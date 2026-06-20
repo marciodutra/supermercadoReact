@@ -5,18 +5,20 @@ import api from "../services/api";
 export default function Historico() {
     const [vendas, setVendas] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [dataFiltro, setDataFiltro] = useState("");
 
     async function carregarVendas() {
         try {
-            const res = await api.get("/vendas");
-            setVendas(res.data);
-        } catch (err) {
-            console.error("ERRO COMPLETO:", err);
-            console.error("RESPOSTA:", err.response);
-            console.error("STATUS:", err.response?.status);
-            console.error("DATA:", err.response?.data);
+            setLoading(true);
 
-            alert("Erro ao carregar histórico. Veja o console (F12).");
+            const res = await api.get("/vendas", {
+                params: dataFiltro ? { data: dataFiltro } : undefined
+            });
+
+            setVendas(res.data);
+
+        } catch (err) {
+            console.error(err);
         } finally {
             setLoading(false);
         }
@@ -24,7 +26,17 @@ export default function Historico() {
 
     useEffect(() => {
         carregarVendas();
+    }, [dataFiltro]);
+
+    // carregar inicial
+    useEffect(() => {
+        carregarVendas();
     }, []);
+
+    // quando muda a data
+    useEffect(() => {
+        carregarVendas(dataFiltro);
+    }, [dataFiltro]);
 
     function formatarData(data) {
         return new Date(data).toLocaleString("pt-BR");
@@ -36,6 +48,7 @@ export default function Historico() {
 
     return (
         <div className="container">
+
             <Link to="/">
                 <button
                     style={{
@@ -53,6 +66,35 @@ export default function Historico() {
             </Link>
 
             <h1>📜 Histórico de Vendas</h1>
+
+            {/* 🔎 FILTRO POR DATA */}
+            <div style={{ marginBottom: "15px" }}>
+                <input
+                    type="date"
+                    value={dataFiltro}
+                    onChange={(e) => setDataFiltro(e.target.value)}
+                    style={{
+                        padding: "10px",
+                        borderRadius: "8px",
+                        border: "1px solid #ccc",
+                        marginRight: "10px"
+                    }}
+                />
+
+                <button
+                    onClick={() => setDataFiltro("")}
+                    style={{
+                        padding: "10px 15px",
+                        borderRadius: "8px",
+                        border: "none",
+                        background: "#e74c3c",
+                        color: "#fff",
+                        cursor: "pointer"
+                    }}
+                >
+                    Limpar filtro
+                </button>
+            </div>
 
             {loading ? (
                 <p>Carregando vendas...</p>
@@ -84,9 +126,7 @@ export default function Historico() {
 
                                 <td>
                                     <Link to={`/vendas/${venda.id}`}>
-                                        <button
-                                            className="btn-green"
-                                        >
+                                        <button className="btn-green">
                                             Ver detalhes
                                         </button>
                                     </Link>

@@ -3,24 +3,44 @@ const router = express.Router();
 const pool = require("../config/database");
 
 /* =====================================
-   LISTAR TODAS AS VENDAS
+   LISTAR VENDAS (COM FILTRO POR DATA)
 ===================================== */
 router.get("/", async (req, res) => {
   try {
-    const result = await pool.query(`
-      SELECT
-        id,
-        total,
-        created_at
-      FROM vendas
-      ORDER BY created_at DESC
-    `);
+    const { data } = req.query;
+    console.log("DATA RECEBIDA:", req.query.data);
 
-    res.json(result.rows);
+    let result;
+
+    // COM FILTRO POR DATA
+    if (data) {
+  result = await pool.query(
+    `
+    SELECT id, total, created_at
+    FROM vendas
+    WHERE created_at >= ($1::date)
+    AND created_at < ($1::date + INTERVAL '1 day')
+    ORDER BY created_at DESC
+    `,
+    [data]
+  );
+}
+    // SEM FILTRO
+    else {
+      result = await pool.query(
+        `
+        SELECT id, total, created_at
+        FROM vendas
+        ORDER BY created_at DESC
+        `
+      );
+    }
+
+    return res.json(result.rows);
 
   } catch (err) {
     console.error(err);
-    res.status(500).json({
+    return res.status(500).json({
       erro: "Erro ao listar vendas"
     });
   }
@@ -31,9 +51,7 @@ router.get("/", async (req, res) => {
    DETALHES DA VENDA
 ===================================== */
 router.get("/:id", async (req, res) => {
-
   try {
-
     const { id } = req.params;
 
     const venda = await pool.query(
@@ -66,34 +84,27 @@ router.get("/:id", async (req, res) => {
       [id]
     );
 
-    res.json({
+    return res.json({
       venda: venda.rows[0],
       itens: itens.rows
     });
 
   } catch (err) {
-
     console.error(err);
-
-    res.status(500).json({
+    return res.status(500).json({
       erro: "Erro ao buscar venda"
     });
-
   }
-
 });
 
 
 /* =====================================
    FINALIZAR VENDA
 ===================================== */
-
 router.post("/", async (req, res) => {
-
   const client = await pool.connect();
 
   try {
-
     const { itens } = req.body;
 
     if (!itens || itens.length === 0) {
@@ -106,7 +117,6 @@ router.post("/", async (req, res) => {
 
     let total = 0;
 
-    // cria venda
     const vendaResult = await client.query(
       `
       INSERT INTO vendas (total)
@@ -125,8 +135,6 @@ router.post("/", async (req, res) => {
 
       total += subtotal;
 
-      // verifica estoque
-
       const estoque = await client.query(
         `
         SELECT estoque
@@ -141,12 +149,8 @@ router.post("/", async (req, res) => {
       }
 
       if (estoque.rows[0].estoque < item.quantidade) {
-        throw new Error(
-          `Estoque insuficiente para ${item.nome}`
-        );
+        throw new Error(`Estoque insuficiente para ${item.nome}`);
       }
-
-      // baixa estoque
 
       await client.query(
         `
@@ -154,34 +158,14 @@ router.post("/", async (req, res) => {
         SET estoque = estoque - $1
         WHERE id=$2
         `,
-        [
-          item.quantidade,
-          item.id
-        ]
+        [item.quantidade, item.id]
       );
-
-      // grava item
 
       await client.query(
         `
         INSERT INTO itens_venda
-        (
-            venda_id,
-            produto_id,
-            nome,
-            quantidade,
-            preco,
-            subtotal
-        )
-        VALUES
-        (
-            $1,
-            $2,
-            $3,
-            $4,
-            $5,
-            $6
-        )
+        (venda_id, produto_id, nome, quantidade, preco, subtotal)
+        VALUES ($1,$2,$3,$4,$5,$6)
         `,
         [
           vendaId,
@@ -192,7 +176,6 @@ router.post("/", async (req, res) => {
           subtotal
         ]
       );
-
     }
 
     await client.query(
@@ -201,36 +184,28 @@ router.post("/", async (req, res) => {
       SET total=$1
       WHERE id=$2
       `,
-      [
-        total,
-        vendaId
-      ]
+      [total, vendaId]
     );
 
     await client.query("COMMIT");
 
-    res.json({
+    return res.json({
       mensagem: "Venda registrada com sucesso!",
       vendaId,
       total
     });
 
   } catch (err) {
-
     await client.query("ROLLBACK");
-
     console.error(err);
 
-    res.status(500).json({
+    return res.status(500).json({
       erro: err.message
     });
 
   } finally {
-
     client.release();
-
   }
-
 });
 
 module.exports = router;
