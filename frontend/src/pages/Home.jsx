@@ -83,6 +83,22 @@ export default function Home() {
                         💰 Caixa
                     </button>
                 </Link>
+
+                <Link to="/dashboard">
+                    <button
+                        style={{
+                            padding: "20px 40px",
+                            fontSize: "18px",
+                            background: "#8e44ad",
+                            color: "#fff",
+                            border: "none",
+                            borderRadius: "10px",
+                            cursor: "pointer"
+                        }}
+                    >
+                        📊 Dashboard
+                    </button>
+                </Link>
             </div>
         </div>
     );

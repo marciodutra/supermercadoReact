@@ -107,4 +107,106 @@ router.post("/fechar", async (req, res) => {
   }
 });
 
+router.get("/resumo", async (req, res) => {
+  try {
+    const caixa = await pool.query(`
+      SELECT *
+      FROM caixa
+      WHERE status = 'aberto'
+      ORDER BY id DESC
+      LIMIT 1
+    `);
+
+    if (caixa.rows.length === 0) {
+      return res.status(404).json({ erro: "Nenhum caixa aberto" });
+    }
+
+    const caixaAtual = caixa.rows[0];
+
+    const vendas = await pool.query(`
+      SELECT COALESCE(SUM(total),0) as total
+      FROM vendas
+      WHERE caixa_id = $1
+    `, [caixaAtual.id]);
+
+    const qtdVendas = await pool.query(`
+      SELECT COUNT(*) as total
+      FROM vendas
+      WHERE caixa_id = $1
+    `, [caixaAtual.id]);
+
+    res.json({
+      caixa: caixaAtual,
+      total_vendas: vendas.rows[0].total,
+      quantidade_vendas: qtdVendas.rows[0].total
+    });
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ erro: "Erro ao gerar resumo do caixa" });
+  }
+});
+
+router.post("/fechar", async (req, res) => {
+  try {
+    const { dinheiro_contado } = req.body;
+
+    const caixaAberto = await pool.query(`
+      SELECT *
+      FROM caixa
+      WHERE status = 'aberto'
+      ORDER BY id DESC
+      LIMIT 1
+    `);
+
+    if (caixaAberto.rows.length === 0) {
+      return res.status(400).json({ erro: "Nenhum caixa aberto" });
+    }
+
+    const caixa = caixaAberto.rows[0];
+
+    const vendas = await pool.query(`
+      SELECT COALESCE(SUM(total),0) AS total
+      FROM vendas
+      WHERE caixa_id = $1
+    `, [caixa.id]);
+
+    const totalVendas = Number(vendas.rows[0].total);
+
+    const valorEsperado =
+      Number(caixa.valor_abertura) + totalVendas;
+
+    const diferenca =
+      Number(dinheiro_contado) - valorEsperado;
+
+    const result = await pool.query(`
+      UPDATE caixa
+      SET
+        data_fechamento = NOW(),
+        total_vendas = $1,
+        valor_fechamento = $2,
+        dinheiro_contado = $3,
+        diferenca = $4,
+        status = 'fechado'
+      WHERE id = $5
+      RETURNING *
+    `, [
+      totalVendas,
+      valorEsperado,
+      dinheiro_contado,
+      diferenca,
+      caixa.id
+    ]);
+
+    res.json({
+      mensagem: "Caixa fechado com sucesso",
+      caixa: result.rows[0]
+    });
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ erro: "Erro ao fechar caixa" });
+  }
+});
+
 module.exports = router;

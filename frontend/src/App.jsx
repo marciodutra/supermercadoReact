@@ -6,6 +6,7 @@ import Pdv from "./pages/Pdv";
 import Historico from "./pages/Historico";
 import DetalheVenda from "./pages/DetalheVenda";
 import Caixa from "./pages/Caixa";
+import Dashboard from "./pages/Dashboard";
 
 import "./styles.css";
 
@@ -25,6 +26,7 @@ function App() {
         <Route path="/vendas/:id" element={<DetalheVenda />} />
 
         <Route path="/caixa" element={<Caixa />} />
+        <Route path="/dashboard" element={<Dashboard />} />
 
       </Routes>
     </BrowserRouter>
