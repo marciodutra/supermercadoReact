@@ -7,6 +7,7 @@ const express = require('express');
 const cors = require('cors');
 const pool = require('./config/database');
 const vendasRoutes = require('./routes/vendasRoutes');
+const caixaRoutes = require("./routes/caixaRoutes");
 
 const app = express();
 
@@ -14,6 +15,7 @@ app.use(cors());
 app.use(express.json());
 app.use('/produtos', produtosRoutes);
 app.use('/vendas', vendasRoutes);
+app.use("/caixa", caixaRoutes);
 
 app.get('/', async (req, res) => {
   try {
@@ -32,7 +34,7 @@ app.get('/', async (req, res) => {
   }
 });
 
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, () => {
   console.log(`Servidor rodando na porta ${PORT}`);

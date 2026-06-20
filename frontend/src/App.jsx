@@ -5,6 +5,7 @@ import Produtos from "./pages/Produtos";
 import Pdv from "./pages/Pdv";
 import Historico from "./pages/Historico";
 import DetalheVenda from "./pages/DetalheVenda";
+import Caixa from "./pages/Caixa";
 
 import "./styles.css";
 
@@ -22,6 +23,8 @@ function App() {
         <Route path="/historico" element={<Historico />} />
 
         <Route path="/vendas/:id" element={<DetalheVenda />} />
+
+        <Route path="/caixa" element={<Caixa />} />
 
       </Routes>
     </BrowserRouter>

@@ -14,22 +14,23 @@ router.get("/", async (req, res) => {
 
     // COM FILTRO POR DATA
     if (data) {
-  result = await pool.query(
-    `
-    SELECT id, total, created_at
-    FROM vendas
-    WHERE created_at >= ($1::date)
-    AND created_at < ($1::date + INTERVAL '1 day')
-    ORDER BY created_at DESC
-    `,
-    [data]
-  );
-}
+      result = await pool.query(
+        `
+        SELECT id, total, created_at, caixa_id
+        FROM vendas
+        WHERE created_at >= ($1::date)
+        AND created_at < ($1::date + INTERVAL '1 day')
+        ORDER BY created_at DESC
+        `,
+        [data]
+      );
+    }
+
     // SEM FILTRO
     else {
       result = await pool.query(
         `
-        SELECT id, total, created_at
+        SELECT id, total, created_at, caixa_id
         FROM vendas
         ORDER BY created_at DESC
         `
@@ -99,7 +100,7 @@ router.get("/:id", async (req, res) => {
 
 
 /* =====================================
-   FINALIZAR VENDA
+   FINALIZAR VENDA (COM CAIXA)
 ===================================== */
 router.post("/", async (req, res) => {
   const client = await pool.connect();
@@ -115,15 +116,33 @@ router.post("/", async (req, res) => {
 
     await client.query("BEGIN");
 
+    // 🔥 BUSCA CAIXA ABERTO
+    const caixa = await client.query(
+      `
+      SELECT id
+      FROM caixa
+      WHERE status = 'aberto'
+      ORDER BY id DESC
+      LIMIT 1
+      `
+    );
+
+    if (caixa.rows.length === 0) {
+      throw new Error("Nenhum caixa aberto");
+    }
+
+    const caixa_id = caixa.rows[0].id;
+
     let total = 0;
 
+    // cria venda COM CAIXA
     const vendaResult = await client.query(
       `
-      INSERT INTO vendas (total)
-      VALUES ($1)
+      INSERT INTO vendas (total, caixa_id)
+      VALUES ($1, $2)
       RETURNING *
       `,
-      [0]
+      [0, caixa_id]
     );
 
     const vendaId = vendaResult.rows[0].id;
@@ -192,7 +211,8 @@ router.post("/", async (req, res) => {
     return res.json({
       mensagem: "Venda registrada com sucesso!",
       vendaId,
-      total
+      total,
+      caixa_id
     });
 
   } catch (err) {
