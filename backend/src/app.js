@@ -1,4 +1,5 @@
 require('dotenv').config();
+console.log("🔥 APP BACKEND CARREGADO");
 
 const produtosRoutes = require('./routes/produtosRoutes');
 
