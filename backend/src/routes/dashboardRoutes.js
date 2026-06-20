@@ -3,32 +3,47 @@ const router = express.Router();
 const pool = require("../config/database");
 
 /* =========================
-   DASHBOARD PRINCIPAL
+   DASHBOARD COM FILTRO
 ========================= */
 router.get("/resumo", async (req, res) => {
   try {
+    const { data } = req.query;
 
-    // vendas de hoje
-    const vendasHoje = await pool.query(`
+    let filtroData = "";
+    let params = [];
+
+    if (data) {
+      filtroData = "WHERE created_at::date = $1::date";
+      params.push(data);
+    }
+
+    // vendas (hoje ou filtrado)
+    const vendas = await pool.query(
+      `
       SELECT COALESCE(SUM(total),0) AS total
       FROM vendas
-      WHERE created_at::date = CURRENT_DATE
-    `);
+      ${filtroData}
+      `,
+      params
+    );
 
-    // quantidade de vendas hoje
-    const qtdVendas = await pool.query(`
+    // quantidade vendas
+    const qtd = await pool.query(
+      `
       SELECT COUNT(*) AS total
       FROM vendas
-      WHERE created_at::date = CURRENT_DATE
-    `);
+      ${filtroData}
+      `,
+      params
+    );
 
-    // total geral (histórico)
+    // total geral sempre (não filtra)
     const totalGeral = await pool.query(`
       SELECT COALESCE(SUM(total),0) AS total
       FROM vendas
     `);
 
-    // produtos mais vendidos
+    // produtos mais vendidos (pode filtrar também se quiser)
     const maisVendidos = await pool.query(`
       SELECT nome, SUM(quantidade) AS total
       FROM itens_venda
@@ -37,7 +52,7 @@ router.get("/resumo", async (req, res) => {
       LIMIT 5
     `);
 
-    // caixa aberto
+    // caixa
     const caixa = await pool.query(`
       SELECT *
       FROM caixa
@@ -47,8 +62,8 @@ router.get("/resumo", async (req, res) => {
     `);
 
     res.json({
-      vendas_hoje: vendasHoje.rows[0].total,
-      quantidade_vendas: qtdVendas.rows[0].total,
+      vendas_hoje: vendas.rows[0].total,
+      quantidade_vendas: qtd.rows[0].total,
       faturamento_total: totalGeral.rows[0].total,
       produtos_mais_vendidos: maisVendidos.rows,
       caixa_aberto: caixa.rows[0] || null
@@ -56,7 +71,7 @@ router.get("/resumo", async (req, res) => {
 
   } catch (err) {
     console.error(err);
-    res.status(500).json({ erro: "Erro ao gerar dashboard" });
+    res.status(500).json({ erro: "Erro no dashboard" });
   }
 });
 

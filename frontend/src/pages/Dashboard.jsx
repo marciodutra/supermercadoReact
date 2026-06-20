@@ -4,11 +4,17 @@ import { Link } from "react-router-dom";
 
 export default function Dashboard() {
     const [data, setData] = useState(null);
+    const [filtroData, setFiltroData] = useState("");
 
-    async function carregar() {
+    async function carregar(dataFiltro = "") {
         try {
-            const res = await api.get("/dashboard/resumo");
+            const url = dataFiltro
+                ? `/dashboard/resumo?data=${dataFiltro}`
+                : "/dashboard/resumo";
+
+            const res = await api.get(url);
             setData(res.data);
+
         } catch (err) {
             console.error(err);
         }
@@ -17,6 +23,15 @@ export default function Dashboard() {
     useEffect(() => {
         carregar();
     }, []);
+
+    function filtrar() {
+        carregar(filtroData);
+    }
+
+    function limpar() {
+        setFiltroData("");
+        carregar();
+    }
 
     return (
         <div className="container">
@@ -27,20 +42,37 @@ export default function Dashboard() {
 
             <h1>📊 Dashboard</h1>
 
+            {/* 🔎 FILTRO POR DATA */}
+            <div style={{ marginBottom: 20 }}>
+                <input
+                    type="date"
+                    value={filtroData}
+                    onChange={(e) => setFiltroData(e.target.value)}
+                />
+
+                <button onClick={filtrar} className="btn-green" style={{ marginLeft: 10 }}>
+                    Filtrar
+                </button>
+
+                <button onClick={limpar} className="btn-blue" style={{ marginLeft: 10 }}>
+                    Hoje
+                </button>
+            </div>
+
             {!data ? (
                 <p>Carregando...</p>
             ) : (
                 <>
-                    {/* CARDS PRINCIPAIS */}
+                    {/* CARDS */}
                     <div style={{ display: "flex", gap: 15, flexWrap: "wrap" }}>
 
                         <div className="card">
-                            <h3>💰 Faturamento Hoje</h3>
+                            <h3>💰 Faturamento</h3>
                             <p>R$ {Number(data.vendas_hoje).toFixed(2)}</p>
                         </div>
 
                         <div className="card">
-                            <h3>🧾 Vendas Hoje</h3>
+                            <h3>🧾 Vendas</h3>
                             <p>{data.quantidade_vendas}</p>
                         </div>
 
