@@ -1,17 +1,38 @@
 import { Link } from "react-router-dom";
 
 export default function Home() {
-    const estiloBotao = {
-        width: "280px",
-        padding: "20px",
-        fontSize: "18px",
-        color: "#fff",
-        border: "none",
-        borderRadius: "10px",
-        cursor: "pointer",
-        fontWeight: "bold",
-        transition: "0.3s"
-    };
+    const menu = [
+        {
+            titulo: "Cadastro de Produtos",
+            icone: "📦",
+            cor: "#3498db",
+            rota: "/produtos"
+        },
+        {
+            titulo: "Abrir PDV",
+            icone: "🧾",
+            cor: "#27ae60",
+            rota: "/pdv"
+        },
+        {
+            titulo: "Histórico de Vendas",
+            icone: "📜",
+            cor: "#8e44ad",
+            rota: "/historico"
+        },
+        {
+            titulo: "Caixa",
+            icone: "💰",
+            cor: "#e67e22",
+            rota: "/caixa"
+        },
+        {
+            titulo: "Dashboard",
+            icone: "📊",
+            cor: "#2c3e50",
+            rota: "/dashboard"
+        }
+    ];
 
     return (
         <div
@@ -19,9 +40,10 @@ export default function Home() {
                 minHeight: "100vh",
                 display: "flex",
                 flexDirection: "column",
-                justifyContent: "center",
                 alignItems: "center",
+                justifyContent: "center",
                 background: "#f5f6fa",
+                padding: "20px"
             }}
         >
             <h1 style={{ marginBottom: "40px" }}>
@@ -30,75 +52,47 @@ export default function Home() {
 
             <div
                 style={{
-                    display: "flex",
-                    flexDirection: "column",
+                    display: "grid",
+                    gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
                     gap: "20px",
+                    width: "100%",
+                    maxWidth: "900px"
                 }}
             >
-                <Link to="/produtos">
-                    <button
-                        style={{
-                            ...estiloBotao,
-                            background: "#3498db",
-                        }}
+                {menu.map((item, index) => (
+                    <Link
+                        key={index}
+                        to={item.rota}
+                        style={{ textDecoration: "none" }}
                     >
-                        📦 Cadastro de Produtos
-                    </button>
-                </Link>
+                        <div
+                            style={{
+                                background: item.cor,
+                                color: "#fff",
+                                padding: "25px",
+                                borderRadius: "12px",
+                                textAlign: "center",
+                                fontSize: "18px",
+                                fontWeight: "bold",
+                                cursor: "pointer",
+                                transition: "0.3s",
+                                boxShadow: "0 4px 10px rgba(0,0,0,0.15)"
+                            }}
+                            onMouseOver={(e) => {
+                                e.currentTarget.style.transform = "scale(1.05)";
+                            }}
+                            onMouseOut={(e) => {
+                                e.currentTarget.style.transform = "scale(1)";
+                            }}
+                        >
+                            <div style={{ fontSize: "30px", marginBottom: "10px" }}>
+                                {item.icone}
+                            </div>
 
-                <Link to="/pdv">
-                    <button
-                        style={{
-                            ...estiloBotao,
-                            background: "#27ae60",
-                        }}
-                    >
-                        🧾 Abrir PDV
-                    </button>
-                </Link>
-
-                <Link to="/historico">
-                    <button
-                        style={{
-                            ...estiloBotao,
-                            background: "#8e44ad",
-                        }}
-                    >
-                        📜 Histórico de Vendas
-                    </button>
-                </Link>
-
-                <Link to="/caixa">
-                    <button
-                        style={{
-                            padding: "20px 40px",
-                            fontSize: "18px",
-                            background: "#8e44ad",
-                            color: "#fff",
-                            border: "none",
-                            borderRadius: "10px",
-                            cursor: "pointer"
-                        }}
-                    >
-                        💰 Caixa
-                    </button>
-                </Link>
-
-                <Link to="/dashboard">
-                    <button
-                        style={{
-                            padding: "20px 40px",
-                            fontSize: "18px",
-                            background: "#8e44ad",
-                            color: "#fff",
-                            border: "none",
-                            borderRadius: "10px",
-                            cursor: "pointer"
-                        }}
-                    >
-                        📊 Dashboard
-                    </button>
-                </Link>
+                            {item.titulo}
+                        </div>
+                    </Link>
+                ))}
             </div>
         </div>
     );
