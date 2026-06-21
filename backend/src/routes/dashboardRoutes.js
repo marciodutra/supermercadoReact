@@ -9,6 +9,8 @@ router.get("/resumo", async (req, res) => {
   try {
     const { data } = req.query;
 
+    console.log("Data recebida:", data);
+
     let filtroData = "";
     let params = [];
 
@@ -17,7 +19,12 @@ router.get("/resumo", async (req, res) => {
       params.push(data);
     }
 
-    // vendas (hoje ou filtrado)
+    console.log("Filtro:", filtroData);
+    console.log("Parâmetros:", params);
+
+    // ======================
+    // VENDAS
+    // ======================
     const vendas = await pool.query(
       `
       SELECT COALESCE(SUM(total),0) AS total
@@ -27,7 +34,6 @@ router.get("/resumo", async (req, res) => {
       params
     );
 
-    // quantidade vendas
     const qtd = await pool.query(
       `
       SELECT COUNT(*) AS total
@@ -37,22 +43,41 @@ router.get("/resumo", async (req, res) => {
       params
     );
 
-    // total geral sempre (não filtra)
     const totalGeral = await pool.query(`
       SELECT COALESCE(SUM(total),0) AS total
       FROM vendas
     `);
 
-    // produtos mais vendidos (pode filtrar também se quiser)
-    const maisVendidos = await pool.query(`
+    // ======================
+    // PRODUTOS VENDIDOS (CORRIGIDO DEFINITIVO)
+    // ======================
+    let sqlProdutos = `
       SELECT nome, SUM(quantidade) AS total
       FROM itens_venda
+    `;
+
+    let paramsProdutos = [];
+
+    if (data) {
+      sqlProdutos += `
+        WHERE venda_id IN (
+          SELECT id FROM vendas WHERE created_at::date = $1::date
+        )
+      `;
+      paramsProdutos.push(data);
+    }
+
+    sqlProdutos += `
       GROUP BY nome
       ORDER BY total DESC
       LIMIT 5
-    `);
+    `;
 
-    // caixa
+    const maisVendidos = await pool.query(sqlProdutos, paramsProdutos);
+
+    // ======================
+    // CAIXA
+    // ======================
     const caixa = await pool.query(`
       SELECT *
       FROM caixa
