@@ -1,11 +1,13 @@
 const express = require("express");
 const router = express.Router();
 const pool = require("../config/database");
+const auth = require("../middlewares/auth");
+const permitir = require("../middlewares/perm");
 
 /* =========================
    DASHBOARD COM FILTRO
 ========================= */
-router.get("/resumo", async (req, res) => {
+router.get("/resumo", auth, permitir("admin"), async (req, res) => {
   try {
     const { data } = req.query;
 

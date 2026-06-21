@@ -9,6 +9,8 @@ const pool = require('./config/database');
 const vendasRoutes = require('./routes/vendasRoutes');
 const caixaRoutes = require("./routes/caixaRoutes");
 const dashboardRoutes = require("./routes/dashboardRoutes");
+const authRoutes = require("./src/routes/authRoutes");
+
 
 
 const app = express();
@@ -19,6 +21,8 @@ app.use('/produtos', produtosRoutes);
 app.use('/vendas', vendasRoutes);
 app.use("/caixa", caixaRoutes);
 app.use("/dashboard", dashboardRoutes);
+app.use(express.json());
+app.use("/auth", authRoutes);
 
 app.get('/', async (req, res) => {
   try {
