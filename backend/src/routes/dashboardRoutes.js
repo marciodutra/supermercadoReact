@@ -100,4 +100,206 @@ router.get("/resumo", async (req, res) => {
   }
 });
 
+function getPeriodo(periodo, dataBase) {
+  const base = new Date(dataBase);
+
+  let inicio = new Date(base);
+  let fim = new Date(base);
+
+  if (periodo === "dia") {
+    inicio = new Date(base);
+    fim = new Date(base);
+  }
+
+  if (periodo === "semana") {
+    const day = base.getDay();
+    inicio = new Date(base);
+    inicio.setDate(base.getDate() - day);
+
+    fim = new Date(inicio);
+    fim.setDate(inicio.getDate() + 6);
+  }
+
+  if (periodo === "quinzena") {
+    if (base.getDate() <= 15) {
+      inicio = new Date(base.getFullYear(), base.getMonth(), 1);
+      fim = new Date(base.getFullYear(), base.getMonth(), 15);
+    } else {
+      inicio = new Date(base.getFullYear(), base.getMonth(), 16);
+      fim = new Date(base.getFullYear(), base.getMonth() + 1, 0);
+    }
+  }
+
+  if (periodo === "mes") {
+    inicio = new Date(base.getFullYear(), base.getMonth(), 1);
+    fim = new Date(base.getFullYear(), base.getMonth() + 1, 0);
+  }
+
+  return {
+    inicio: inicio.toISOString().split("T")[0],
+    fim: fim.toISOString().split("T")[0]
+  };
+}
+
+router.get("/relatorio", async (req, res) => {
+  try {
+    const { periodo, data } = req.query;
+
+    if (!periodo || !data) {
+      return res.status(400).json({
+        erro: "Informe periodo e data base"
+      });
+    }
+
+    const { inicio, fim } = getPeriodo(periodo, data);
+
+    console.log("Relatório:", periodo, inicio, fim);
+
+    // vendas
+    const vendas = await pool.query(
+      `
+      SELECT COALESCE(SUM(total),0) AS total
+      FROM vendas
+      WHERE created_at::date BETWEEN $1 AND $2
+      `,
+      [inicio, fim]
+    );
+
+    // quantidade
+    const qtd = await pool.query(
+      `
+      SELECT COUNT(*) AS total
+      FROM vendas
+      WHERE created_at::date BETWEEN $1 AND $2
+      `,
+      [inicio, fim]
+    );
+
+    // produtos
+    const produtos = await pool.query(
+      `
+      SELECT nome, SUM(quantidade) AS total
+      FROM itens_venda iv
+      JOIN vendas v ON v.id = iv.venda_id
+      WHERE v.created_at::date BETWEEN $1 AND $2
+      GROUP BY nome
+      ORDER BY total DESC
+      `,
+      [inicio, fim]
+    );
+
+    res.json({
+      periodo: { inicio, fim },
+      vendas: vendas.rows[0].total,
+      quantidade: qtd.rows[0].total,
+      produtos: produtos.rows
+    });
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ erro: "Erro no relatório" });
+  }
+});
+
+function getPeriodo(periodo, dataBase) {
+  const base = new Date(dataBase);
+
+  let inicio = new Date(base);
+  let fim = new Date(base);
+
+  if (periodo === "dia") {
+    inicio = new Date(base);
+    fim = new Date(base);
+  }
+
+  if (periodo === "semana") {
+    const day = base.getDay();
+    inicio = new Date(base);
+    inicio.setDate(base.getDate() - day);
+
+    fim = new Date(inicio);
+    fim.setDate(inicio.getDate() + 6);
+  }
+
+  if (periodo === "quinzena") {
+    if (base.getDate() <= 15) {
+      inicio = new Date(base.getFullYear(), base.getMonth(), 1);
+      fim = new Date(base.getFullYear(), base.getMonth(), 15);
+    } else {
+      inicio = new Date(base.getFullYear(), base.getMonth(), 16);
+      fim = new Date(base.getFullYear(), base.getMonth() + 1, 0);
+    }
+  }
+
+  if (periodo === "mes") {
+    inicio = new Date(base.getFullYear(), base.getMonth(), 1);
+    fim = new Date(base.getFullYear(), base.getMonth() + 1, 0);
+  }
+
+  return {
+    inicio: inicio.toISOString().split("T")[0],
+    fim: fim.toISOString().split("T")[0]
+  };
+}
+
+router.get("/relatorio", async (req, res) => {
+  try {
+    const { periodo, data } = req.query;
+
+    if (!periodo || !data) {
+      return res.status(400).json({
+        erro: "Informe periodo e data base"
+      });
+    }
+
+    const { inicio, fim } = getPeriodo(periodo, data);
+
+    console.log("Relatório:", periodo, inicio, fim);
+
+    // vendas
+    const vendas = await pool.query(
+      `
+      SELECT COALESCE(SUM(total),0) AS total
+      FROM vendas
+      WHERE created_at::date BETWEEN $1 AND $2
+      `,
+      [inicio, fim]
+    );
+
+    // quantidade
+    const qtd = await pool.query(
+      `
+      SELECT COUNT(*) AS total
+      FROM vendas
+      WHERE created_at::date BETWEEN $1 AND $2
+      `,
+      [inicio, fim]
+    );
+
+    // produtos
+    const produtos = await pool.query(
+      `
+      SELECT nome, SUM(quantidade) AS total
+      FROM itens_venda iv
+      JOIN vendas v ON v.id = iv.venda_id
+      WHERE v.created_at::date BETWEEN $1 AND $2
+      GROUP BY nome
+      ORDER BY total DESC
+      `,
+      [inicio, fim]
+    );
+
+    res.json({
+      periodo: { inicio, fim },
+      vendas: vendas.rows[0].total,
+      quantidade: qtd.rows[0].total,
+      produtos: produtos.rows
+    });
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ erro: "Erro no relatório" });
+  }
+});
+
 module.exports = router;
