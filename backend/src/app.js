@@ -1,42 +1,43 @@
-require('dotenv').config();
+require("dotenv").config();
 console.log("🔥 APP BACKEND CARREGADO");
 
-const produtosRoutes = require('./routes/produtosRoutes');
+const express = require("express");
+const cors = require("cors");
+const pool = require("./config/database");
 
-const express = require('express');
-const cors = require('cors');
-const pool = require('./config/database');
-const vendasRoutes = require('./routes/vendasRoutes');
+// routes
+const produtosRoutes = require("./routes/produtosRoutes");
+const vendasRoutes = require("./routes/vendasRoutes");
 const caixaRoutes = require("./routes/caixaRoutes");
 const dashboardRoutes = require("./routes/dashboardRoutes");
-const authRoutes = require("./src/routes/authRoutes");
-
-
+const authRoutes = require("./routes/authRoutes"); // ✅ CORRIGIDO
 
 const app = express();
 
 app.use(cors());
 app.use(express.json());
-app.use('/produtos', produtosRoutes);
-app.use('/vendas', vendasRoutes);
+
+// routes middlewares
+app.use("/produtos", produtosRoutes);
+app.use("/vendas", vendasRoutes);
 app.use("/caixa", caixaRoutes);
 app.use("/dashboard", dashboardRoutes);
-app.use(express.json());
 app.use("/auth", authRoutes);
 
-app.get('/', async (req, res) => {
+// health check
+app.get("/", async (req, res) => {
   try {
-    const result = await pool.query('SELECT NOW()');
+    const result = await pool.query("SELECT NOW()");
 
     res.json({
-      mensagem: 'Banco conectado!',
-      horario: result.rows[0]
+      mensagem: "Banco conectado!",
+      horario: result.rows[0],
     });
   } catch (error) {
     console.error(error);
 
     res.status(500).json({
-      erro: 'Falha ao conectar ao banco'
+      erro: "Falha ao conectar ao banco",
     });
   }
 });
