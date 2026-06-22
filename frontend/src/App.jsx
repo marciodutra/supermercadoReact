@@ -12,7 +12,7 @@ import Usuarios from "./pages/Usuarios";
 
 import Sidebar from "./components/Sidebar";
 import ProtectedRoute from "./components/ProtectedRoute";
-
+import NaoAutorizado from "./pages/NaoAutorizado";
 import "./styles.css";
 
 function Layout({ children }) {
@@ -118,6 +118,7 @@ function App() {
 
         {/* fallback */}
         <Route path="*" element={<Navigate to="/dashboard" />} />
+        <Route path="/nao-autorizado" element={<NaoAutorizado />} />
 
       </Routes>
     </BrowserRouter>
