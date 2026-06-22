@@ -8,12 +8,12 @@ import DetalheVenda from "./pages/DetalheVenda";
 import Caixa from "./pages/Caixa";
 import Dashboard from "./pages/Dashboard";
 import Login from "./pages/Login";
+import Usuarios from "./pages/Usuarios";
 
 import Sidebar from "./components/Sidebar";
 import ProtectedRoute from "./components/ProtectedRoute";
 
 import "./styles.css";
-import Usuarios from "./pages/Usuarios";
 
 function Layout({ children }) {
   return (
@@ -86,34 +86,38 @@ function App() {
           }
         />
 
-        {/* HISTÓRICO */}
+        {/* HISTÓRICO (SÓ ADMIN) */}
         <Route
           path="/historico"
           element={
-            <ProtectedRoute allowedRoles={["admin", "caixa"]}>
+            <ProtectedRoute allowedRoles={["admin"]}>
               <Layout><Historico /></Layout>
             </ProtectedRoute>
           }
         />
 
-        {/* DETALHE VENDA (qualquer logado) */}
+        {/* DETALHE VENDA (SÓ ADMIN) */}
         <Route
           path="/vendas/:id"
           element={
-            <ProtectedRoute allowedRoles={["admin", "caixa", "estoque"]}>
+            <ProtectedRoute allowedRoles={["admin"]}>
               <Layout><DetalheVenda /></Layout>
             </ProtectedRoute>
           }
         />
 
+        {/* USUÁRIOS (SÓ ADMIN) */}
         <Route
           path="/usuarios"
           element={
-            <Layout>
-              <Usuarios />
-            </Layout>
+            <ProtectedRoute allowedRoles={["admin"]}>
+              <Layout><Usuarios /></Layout>
+            </ProtectedRoute>
           }
         />
+
+        {/* fallback */}
+        <Route path="*" element={<Navigate to="/dashboard" />} />
 
       </Routes>
     </BrowserRouter>

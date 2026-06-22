@@ -1,11 +1,13 @@
 const express = require("express");
 const router = express.Router();
 const pool = require("../config/database");
+const auth = require("../middlewares/auth");
+const permitir = require("../middlewares/perm");
 
 /* =====================================
    LISTAR VENDAS (COM FILTRO POR DATA)
 ===================================== */
-router.get("/", async (req, res) => {
+router.get("/", auth, permitir("admin"), async (req, res) => {
   try {
     const { data } = req.query;
     console.log("DATA RECEBIDA:", req.query.data);
@@ -51,7 +53,7 @@ router.get("/", async (req, res) => {
 /* =====================================
    DETALHES DA VENDA
 ===================================== */
-router.get("/:id", async (req, res) => {
+router.get("/:id", auth, permitir("admin"), async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -102,7 +104,7 @@ router.get("/:id", async (req, res) => {
 /* =====================================
    FINALIZAR VENDA (COM CAIXA)
 ===================================== */
-router.post("/", async (req, res) => {
+router.post("/", auth, permitir("admin", "caixa"), async (req, res) => {
   const client = await pool.connect();
 
   try {
