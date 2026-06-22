@@ -103,23 +103,7 @@ export default function Dashboard() {
             </Link>
 
             <h1>📊 Dashboard</h1>
-
-            {/* FILTRO DASHBOARD */}
-            <div style={{ marginBottom: 20 }}>
-                <input
-                    type="date"
-                    value={filtroData}
-                    onChange={(e) => setFiltroData(e.target.value)}
-                />
-
-                <button onClick={filtrar} className="btn-green" style={{ marginLeft: 10 }}>
-                    Filtrar
-                </button>
-
-                <button onClick={limpar} className="btn-blue" style={{ marginLeft: 10 }}>
-                    Hoje
-                </button>
-            </div>
+            
 
             {/* RELATÓRIO */}
             <div style={{ marginBottom: 30 }}>

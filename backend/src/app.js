@@ -10,7 +10,8 @@ const produtosRoutes = require("./routes/produtosRoutes");
 const vendasRoutes = require("./routes/vendasRoutes");
 const caixaRoutes = require("./routes/caixaRoutes");
 const dashboardRoutes = require("./routes/dashboardRoutes");
-const authRoutes = require("./routes/authRoutes"); // ✅ CORRIGIDO
+const authRoutes = require("./routes/authRoutes");
+const usuariosRoutes = require("./routes/usuariosRoutes");
 
 const app = express();
 
@@ -23,6 +24,7 @@ app.use("/vendas", vendasRoutes);
 app.use("/caixa", caixaRoutes);
 app.use("/dashboard", dashboardRoutes);
 app.use("/auth", authRoutes);
+app.use("/usuarios", usuariosRoutes);
 
 // health check
 app.get("/", async (req, res) => {

@@ -1,22 +1,51 @@
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 
 export default function Sidebar() {
     const location = useLocation();
+    const navigate = useNavigate();
 
+    const user = JSON.parse(localStorage.getItem("user"));
+
+    function logout() {
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+        navigate("/login");
+    }
+
+    // MENU COM PERMISSÃO
     const menu = [
-        { label: "Dashboard", icon: "📊", path: "/dashboard" },
-        { label: "PDV", icon: "🧾", path: "/pdv" },
-        { label: "Produtos", icon: "📦", path: "/produtos" },
-        { label: "Histórico", icon: "📜", path: "/historico" },
-        { label: "Caixa", icon: "💰", path: "/caixa" },
+        { label: "Dashboard", icon: "📊", path: "/dashboard", roles: ["admin"] },
+        { label: "PDV", icon: "🧾", path: "/pdv", roles: ["admin", "caixa"] },
+        { label: "Produtos", icon: "📦", path: "/produtos", roles: ["admin", "estoque"] },
+        { label: "Histórico", icon: "📜", path: "/historico", roles: ["admin"] },
+        { label: "Caixa", icon: "💰", path: "/caixa", roles: ["admin", "caixa"] },
+        { label: "Usuários", icon: "👤", path: "/usuarios", roles: ["admin"] },
     ];
+
+    const filteredMenu = menu.filter(item =>
+        item.roles.includes(user?.role)
+    );
 
     return (
         <div style={styles.sidebar}>
-            <h2 style={styles.logo}>🛒 Supermercado</h2>
 
+            {/* TOPO */}
+            <div>
+                <h2 style={styles.logo}>🛒 Supermercado</h2>
+
+                <div style={styles.userBox}>
+                    <p style={styles.userName}>
+                        {user?.nome || "Usuário"}
+                    </p>
+                    <p style={styles.userRole}>
+                        {user?.role}
+                    </p>
+                </div>
+            </div>
+
+            {/* MENU */}
             <nav style={styles.nav}>
-                {menu.map((item, index) => {
+                {filteredMenu.map((item, index) => {
                     const ativo = location.pathname === item.path;
 
                     return (
@@ -33,7 +62,13 @@ export default function Sidebar() {
                         </Link>
                     );
                 })}
+
+                {/* LOGOUT LOGO ABAIXO DE USUÁRIOS */}
+                <button onClick={logout} style={styles.logout}>
+                    🚪 Sair
+                </button>
             </nav>
+
         </div>
     );
 }
@@ -54,14 +89,35 @@ const styles = {
 
     logo: {
         fontSize: "18px",
-        marginBottom: "30px",
-        textAlign: "center"
+        textAlign: "center",
+        marginBottom: "10px"
+    },
+
+    userBox: {
+        textAlign: "center",
+        marginBottom: "20px",
+        padding: "10px",
+        background: "#1f2a40",
+        borderRadius: "8px"
+    },
+
+    userName: {
+        margin: 0,
+        fontWeight: "bold",
+        fontSize: "14px"
+    },
+
+    userRole: {
+        margin: 0,
+        fontSize: "12px",
+        opacity: 0.7
     },
 
     nav: {
         display: "flex",
         flexDirection: "column",
-        gap: "10px"
+        gap: "10px",
+        flex: 1
     },
 
     link: {
@@ -72,5 +128,18 @@ const styles = {
         color: "#fff",
         textDecoration: "none",
         transition: "0.2s",
+    },
+
+    logout: {
+        marginTop: "10px",
+        padding: "12px",
+        background: "#e74c3c",
+        color: "#fff",
+        border: "none",
+        borderRadius: "8px",
+        cursor: "pointer",
+        fontWeight: "bold",
+        width: "100%",
+        textAlign: "left"
     }
 };
