@@ -1,20 +1,19 @@
 const express = require("express");
 const router = express.Router();
 const pool = require("../config/database");
+
 const auth = require("../middlewares/auth");
 const permitir = require("../middlewares/perm");
 
 /* =====================================
-   LISTAR VENDAS (COM FILTRO POR DATA)
+   LISTAR VENDAS (ADMIN ONLY)
 ===================================== */
 router.get("/", auth, permitir("admin"), async (req, res) => {
   try {
     const { data } = req.query;
-    console.log("DATA RECEBIDA:", req.query.data);
 
     let result;
 
-    // COM FILTRO POR DATA
     if (data) {
       result = await pool.query(
         `
@@ -26,10 +25,7 @@ router.get("/", auth, permitir("admin"), async (req, res) => {
         `,
         [data]
       );
-    }
-
-    // SEM FILTRO
-    else {
+    } else {
       result = await pool.query(
         `
         SELECT id, total, created_at, caixa_id
@@ -43,43 +39,29 @@ router.get("/", auth, permitir("admin"), async (req, res) => {
 
   } catch (err) {
     console.error(err);
-    return res.status(500).json({
-      erro: "Erro ao listar vendas"
-    });
+    return res.status(500).json({ erro: "Erro ao listar vendas" });
   }
 });
 
-
 /* =====================================
-   DETALHES DA VENDA
+   DETALHES VENDA (ADMIN ONLY)
 ===================================== */
 router.get("/:id", auth, permitir("admin"), async (req, res) => {
   try {
     const { id } = req.params;
 
     const venda = await pool.query(
-      `
-      SELECT *
-      FROM vendas
-      WHERE id=$1
-      `,
+      `SELECT * FROM vendas WHERE id=$1`,
       [id]
     );
 
     if (venda.rows.length === 0) {
-      return res.status(404).json({
-        erro: "Venda não encontrada"
-      });
+      return res.status(404).json({ erro: "Venda não encontrada" });
     }
 
     const itens = await pool.query(
       `
-      SELECT
-        produto_id,
-        nome,
-        quantidade,
-        preco,
-        subtotal
+      SELECT produto_id, nome, quantidade, preco, subtotal
       FROM itens_venda
       WHERE venda_id=$1
       ORDER BY id
@@ -94,15 +76,12 @@ router.get("/:id", auth, permitir("admin"), async (req, res) => {
 
   } catch (err) {
     console.error(err);
-    return res.status(500).json({
-      erro: "Erro ao buscar venda"
-    });
+    return res.status(500).json({ erro: "Erro ao buscar venda" });
   }
 });
 
-
 /* =====================================
-   FINALIZAR VENDA (COM CAIXA)
+   FINALIZAR VENDA (CAIXA + ADMIN)
 ===================================== */
 router.post("/", auth, permitir("admin", "caixa"), async (req, res) => {
   const client = await pool.connect();
@@ -111,33 +90,33 @@ router.post("/", auth, permitir("admin", "caixa"), async (req, res) => {
     const { itens } = req.body;
 
     if (!itens || itens.length === 0) {
-      return res.status(400).json({
-        erro: "Carrinho vazio"
-      });
+      return res.status(400).json({ erro: "Carrinho vazio" });
     }
 
     await client.query("BEGIN");
 
-    // 🔥 BUSCA CAIXA ABERTO
-    const caixa = await client.query(
-      `
+    // 🔥 BUSCAR CAIXA ABERTO
+    const caixa = await client.query(`
       SELECT id
       FROM caixa
       WHERE status = 'aberto'
       ORDER BY id DESC
       LIMIT 1
-      `
-    );
+    `);
 
+    // ✔️ CORREÇÃO IMPORTANTE (NÃO DAR THROW)
     if (caixa.rows.length === 0) {
-      throw new Error("Nenhum caixa aberto");
+      await client.query("ROLLBACK");
+
+      return res.status(400).json({
+        erro: "Nenhum caixa aberto. Abra o caixa antes de realizar vendas."
+      });
     }
 
     const caixa_id = caixa.rows[0].id;
 
     let total = 0;
 
-    // cria venda COM CAIXA
     const vendaResult = await client.query(
       `
       INSERT INTO vendas (total, caixa_id)
@@ -150,18 +129,11 @@ router.post("/", auth, permitir("admin", "caixa"), async (req, res) => {
     const vendaId = vendaResult.rows[0].id;
 
     for (const item of itens) {
-
-      const subtotal =
-        Number(item.preco) * Number(item.quantidade);
-
+      const subtotal = Number(item.preco) * Number(item.quantidade);
       total += subtotal;
 
       const estoque = await client.query(
-        `
-        SELECT estoque
-        FROM produtos
-        WHERE id=$1
-        `,
+        `SELECT estoque FROM produtos WHERE id=$1`,
         [item.id]
       );
 
@@ -174,11 +146,7 @@ router.post("/", auth, permitir("admin", "caixa"), async (req, res) => {
       }
 
       await client.query(
-        `
-        UPDATE produtos
-        SET estoque = estoque - $1
-        WHERE id=$2
-        `,
+        `UPDATE produtos SET estoque = estoque - $1 WHERE id=$2`,
         [item.quantidade, item.id]
       );
 
@@ -200,11 +168,7 @@ router.post("/", auth, permitir("admin", "caixa"), async (req, res) => {
     }
 
     await client.query(
-      `
-      UPDATE vendas
-      SET total=$1
-      WHERE id=$2
-      `,
+      `UPDATE vendas SET total=$1 WHERE id=$2`,
       [total, vendaId]
     );
 

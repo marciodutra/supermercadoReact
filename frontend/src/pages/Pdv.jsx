@@ -6,6 +6,7 @@ export default function Pdv() {
     const [produtos, setProdutos] = useState([]);
     const [carrinho, setCarrinho] = useState([]);
     const [busca, setBusca] = useState("");
+    const [valorPago, setValorPago] = useState("");
 
     async function carregarProdutos() {
         const res = await api.get("/produtos");
@@ -53,15 +54,37 @@ export default function Pdv() {
         );
     }
 
+    function troco() {
+        const pago = Number(valorPago);
+        const totalVenda = total();
+
+        if (pago <= 0) return 0;
+
+        return pago - totalVenda;
+    }
+
     async function finalizarVenda() {
         try {
+            if (carrinho.length === 0) return;
+
+            const totalVenda = total();
+            const pago = Number(valorPago);
+
+            if (pago < totalVenda) {
+                alert("Valor pago insuficiente!");
+                return;
+            }
+
             await api.post("/vendas", {
                 itens: carrinho
             });
 
             alert("Venda realizada com sucesso!");
+
             setCarrinho([]);
+            setValorPago("");
             carregarProdutos();
+
         } catch (err) {
             console.error(err);
             alert("Erro ao finalizar venda");
@@ -188,6 +211,25 @@ export default function Pdv() {
                 }}
             >
                 Total: R$ {total().toFixed(2)}
+            </h3>
+
+            <h3>💰 Pagamento</h3>
+
+            <input
+                type="number"
+                placeholder="Valor pago"
+                value={valorPago}
+                onChange={(e) => setValorPago(e.target.value)}
+                style={{
+                    padding: "10px",
+                    width: "100%",
+                    borderRadius: "8px",
+                    marginBottom: "10px"
+                }}
+            />
+
+            <h3>
+                💸 Troco: R$ {troco().toFixed(2)}
             </h3>
 
             <button
